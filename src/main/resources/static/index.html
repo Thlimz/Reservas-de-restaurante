@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservas de Restaurante</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topo">
+        <div class="topo-inner">
+            <h1>🍽️ Sistema de Reservas</h1>
+            <div class="restaurante-picker">
+                <label for="restauranteAtivo">Restaurante:</label>
+                <select id="restauranteAtivo"></select>
+            </div>
+        </div>
+    </header>
+
+    <nav class="abas">
+        <button class="aba ativa" data-aba="reservas">Reservas</button>
+        <button class="aba" data-aba="disponibilidade">Disponibilidade</button>
+        <button class="aba" data-aba="mesas">Mesas</button>
+        <button class="aba" data-aba="clientes">Clientes</button>
+        <button class="aba" data-aba="restaurantes">Restaurantes</button>
+    </nav>
+
+    <main>
+        <!-- ================= RESERVAS ================= -->
+        <section id="reservas" class="painel ativo">
+            <div class="grid">
+                <div class="card">
+                    <h2>Nova reserva</h2>
+                    <form id="formReserva">
+                        <label>Cliente
+                            <select name="clienteId" id="reservaCliente" required></select>
+                        </label>
+                        <label>Mesa
+                            <select name="mesaId" id="reservaMesa" required></select>
+                        </label>
+                        <div class="linha">
+                            <label>Data
+                                <input type="date" name="dataReserva" required>
+                            </label>
+                            <label>Pessoas
+                                <input type="number" name="pessoas" min="1" value="2" required>
+                            </label>
+                        </div>
+                        <div class="linha">
+                            <label>Início
+                                <input type="time" name="horaInicio" value="19:00" required>
+                            </label>
+                            <label>Fim
+                                <input type="time" name="horaFim" value="21:00" required>
+                            </label>
+                        </div>
+                        <label>Observação
+                            <input type="text" name="observacao" placeholder="Opcional">
+                        </label>
+                        <button type="submit" class="btn-primario">Criar reserva</button>
+                    </form>
+                </div>
+
+                <div class="card larga">
+                    <div class="card-cabecalho">
+                        <h2>Reservas</h2>
+                        <div class="filtros">
+                            <input type="date" id="filtroData" title="Filtrar por data">
+                            <select id="filtroStatus" title="Filtrar por status">
+                                <option value="">Todos os status</option>
+                                <option value="AGENDADA">AGENDADA</option>
+                                <option value="CONFIRMADA">CONFIRMADA</option>
+                                <option value="CANCELADA">CANCELADA</option>
+                                <option value="FINALIZADA">FINALIZADA</option>
+                            </select>
+                            <button id="btnFiltrar" class="btn-secundario">Filtrar</button>
+                            <button id="btnLimparFiltro" class="btn-texto">Limpar</button>
+                        </div>
+                    </div>
+                    <div id="listaReservas" class="lista"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= DISPONIBILIDADE ================= -->
+        <section id="disponibilidade" class="painel">
+            <div class="card">
+                <h2>Consultar disponibilidade</h2>
+                <form id="formDisponibilidade">
+                    <div class="linha">
+                        <label>Data
+                            <input type="date" name="data" required>
+                        </label>
+                        <label>Início
+                            <input type="time" name="inicio" value="19:00" required>
+                        </label>
+                        <label>Fim
+                            <input type="time" name="fim" value="21:00" required>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-primario">Verificar</button>
+                </form>
+            </div>
+            <div class="card larga">
+                <h2>Mesas na janela consultada</h2>
+                <div id="listaDisponibilidade" class="mesas-grid"></div>
+            </div>
+        </section>
+
+        <!-- ================= MESAS ================= -->
+        <section id="mesas" class="painel">
+            <div class="grid">
+                <div class="card">
+                    <h2>Cadastrar mesa/sala</h2>
+                    <form id="formMesa">
+                        <div class="linha">
+                            <label>Número
+                                <input type="number" name="numero" min="1" required>
+                            </label>
+                            <label>Capacidade
+                                <input type="number" name="capacidade" min="1" value="4" required>
+                            </label>
+                        </div>
+                        <label>Tipo
+                            <select name="tipo" required>
+                                <option value="MESA">MESA</option>
+                                <option value="SALA">SALA</option>
+                            </select>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="ativo" checked> Ativa
+                        </label>
+                        <button type="submit" class="btn-primario">Cadastrar</button>
+                    </form>
+                </div>
+                <div class="card larga">
+                    <h2>Mesas do restaurante</h2>
+                    <div id="listaMesas" class="mesas-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= CLIENTES ================= -->
+        <section id="clientes" class="painel">
+            <div class="grid">
+                <div class="card">
+                    <h2>Cadastrar cliente</h2>
+                    <form id="formCliente">
+                        <label>Nome
+                            <input type="text" name="nome" required>
+                        </label>
+                        <label>Telefone
+                            <input type="text" name="telefone" placeholder="(11) 99999-9999">
+                        </label>
+                        <label>E-mail
+                            <input type="email" name="email" placeholder="cliente@email.com">
+                        </label>
+                        <button type="submit" class="btn-primario">Cadastrar</button>
+                    </form>
+                </div>
+                <div class="card larga">
+                    <h2>Clientes</h2>
+                    <div id="listaClientes" class="lista"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= RESTAURANTES ================= -->
+        <section id="restaurantes" class="painel">
+            <div class="grid">
+                <div class="card">
+                    <h2>Criar restaurante</h2>
+                    <form id="formRestaurante">
+                        <label>Nome
+                            <input type="text" name="nome" required>
+                        </label>
+                        <label>Endereço
+                            <input type="text" name="endereco">
+                        </label>
+                        <label>Telefone
+                            <input type="text" name="telefone">
+                        </label>
+                        <button type="submit" class="btn-primario">Criar</button>
+                    </form>
+                </div>
+                <div class="card larga">
+                    <h2>Restaurantes</h2>
+                    <div id="listaRestaurantes" class="lista"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
