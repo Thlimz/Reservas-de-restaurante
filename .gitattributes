@@ -1,0 +1,17 @@
+# Normaliza fim de linha automaticamente
+* text=auto eol=lf
+
+# Scripts Windows sempre com CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Maven Wrapper (Unix) sempre com LF
+mvnw text eol=lf
+
+# Arquivos binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.jar binary
