@@ -1,0 +1,233 @@
+# 🍽️ Sistema de Reservas para Restaurantes
+
+API REST e protótipo web para gerenciar **restaurantes, mesas/salas, clientes e reservas**,
+calculando a disponibilidade em tempo real e evitando conflitos de horário.
+
+![Java](https://img.shields.io/badge/Java-17-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-blue)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+---
+
+## 📖 Descrição
+
+Restaurantes que aceitam reservas por telefone/planilha sofrem com **overbooking** (duas reservas
+para a mesma mesa no mesmo horário), reservas acima da capacidade da mesa e falta de visão do que
+está livre. Este projeto resolve isso com um **backend transacional** que centraliza as regras de
+negócio: valida capacidade, impede sobreposição de horários, controla o ciclo de vida da reserva e
+calcula a disponibilidade das mesas em tempo real.
+
+Acompanha um **protótipo web** (servido pelo próprio Spring) para operar tudo pelo navegador.
+
+---
+
+## ✨ Funcionalidades
+
+- **Restaurantes** — cadastro e listagem.
+- **Mesas/Salas** — cadastro com capacidade e tipo (`MESA` ou `SALA`), listagem por restaurante.
+- **Clientes** — cadastro e listagem.
+- **Reservas** — criação com validação completa de regras de negócio:
+  - ❌ rejeita data/horário no passado;
+  - ❌ rejeita número de pessoas acima da capacidade da mesa;
+  - ❌ rejeita conflito de horário (mesa já reservada na janela — a função `existeReserva`);
+  - ❌ rejeita mesa inativa.
+- **Ciclo de status** — `AGENDADA` → `CONFIRMADA` → `FINALIZADA`, ou `CANCELADA`.
+  - Cancelamento permitido **somente até 2h antes** do horário;
+  - reservas `CANCELADA`/`FINALIZADA` tornam-se imutáveis.
+- **Disponibilidade em tempo real** — consulta quais mesas estão livres em uma janela de horário
+  (considera apenas reservas `AGENDADA`/`CONFIRMADA`).
+- **Filtros** — listagem de reservas por data e/ou status.
+- **Tratamento de erros** padronizado em JSON (404, 422, validação de campos).
+- **Protótipo web** responsivo (HTML/CSS/JS puro) com abas para todas as operações.
+
+---
+
+## 🛠️ Tecnologias
+
+- **Java 17** (bytecode `release 17`; validado rodando também no JDK 25)
+- **Spring Boot 3.3.5**
+- **Spring Web** — API REST
+- **Spring Data JPA** + **Hibernate 6.5** — persistência
+- **Jakarta Bean Validation** — validação de payloads
+- **MySQL 8.4**
+- **Docker** / **Docker Compose** — banco de dados containerizado
+- **Maven** (com **Maven Wrapper** — não exige Maven instalado)
+- **HTML5 + CSS3 + JavaScript** — protótipo de front-end
+
+---
+
+## 🏗️ Arquitetura
+
+Aplicação em **camadas**, com fluxo de dependência unidirecional:
+
+```
+      HTTP (JSON)
+          │
+     ┌────▼─────┐
+     │Controller│  → expõe os endpoints REST, valida o payload
+     └────┬─────┘
+     ┌────▼─────┐
+     │ Service  │  → regras de negócio (conflito, capacidade, status, 2h)
+     └────┬─────┘
+     ┌────▼─────┐
+     │Repository│  → Spring Data JPA (consultas de conflito/disponibilidade)
+     └────┬─────┘
+     ┌────▼─────┐
+     │  MySQL   │  → persistência
+     └──────────┘
+```
+
+**Padrões e princípios aplicados:**
+
+- **DTO Pattern** — entrada/saída via `records` dedicados, sem expor as entidades JPA.
+- **Repository Pattern** — abstração de acesso a dados com Spring Data.
+- **Dependency Injection** — injeção por construtor (favorece imutabilidade e testabilidade).
+- **Separação de responsabilidades** — controllers finos, regras concentradas nos services.
+- **Tratamento centralizado de exceções** — `@RestControllerAdvice` traduz erros em JSON.
+- **SOLID / Clean Code** — nomes descritivos, funções coesas, baixo acoplamento entre camadas.
+
+---
+
+## ▶️ Como executar
+
+### Pré-requisitos
+
+- **JDK 17+** — <https://adoptium.net/> (ou `winget install EclipseAdoptium.Temurin.17.JDK`)
+- **Docker Desktop** — para subir o MySQL (ou um MySQL 8+ instalado localmente)
+
+> Maven **não** é necessário: o projeto inclui o *Maven Wrapper* (`mvnw`/`mvnw.cmd`).
+
+### Passo a passo
+
+**1. Suba o banco (MySQL via Docker):**
+
+```bash
+docker compose up -d
+```
+
+Isso cria o container `reservas-mysql` (MySQL 8.4, usuário `root`/`root`, banco `reservas`, porta 3306).
+Confira com `docker ps` — deve aparecer como `healthy`.
+
+**2. Rode a aplicação:**
+
+```bash
+# Windows
+.\mvnw.cmd spring-boot:run
+
+# Linux / macOS
+./mvnw spring-boot:run
+```
+
+**3. Acesse:**
+
+- **Front-end (protótipo):** <http://localhost:8080/>
+
+> **Credenciais:** o app conecta como `root`/`root` por padrão. Se a senha do seu MySQL for outra,
+> defina antes de rodar: `DB_USER` e `DB_PASSWORD` (variáveis de ambiente) — ou edite
+> `src/main/resources/application.properties`.
+
+> O banco **persiste** os dados entre reinícios (`ddl-auto=update`). O seed (`data.sql`) usa
+> `INSERT IGNORE`, então é inserido uma única vez e não duplica a cada boot.
+
+### Rodar pela IDE
+
+Abra a pasta no **IntelliJ IDEA** ou **VS Code** (extensões Java) e execute a classe
+`ReservasApplication`. A IDE já traz o Maven embutido.
+
+### Inspecionar o banco no DataGrip
+
+Com o container no ar (`docker compose up -d`):
+
+1. **File → New → Data Source → MySQL**.
+2. No campo **Driver**, se estiver *"Not downloaded"*, clique em **Download**.
+3. Preencha: **Host** `localhost` · **Port** `3306` · **User** `root` · **Password** `root` ·
+   **Database** `reservas` (a URL vira `jdbc:mysql://localhost:3306/reservas`).
+4. **Test Connection** → *Succeeded* → **OK**.
+5. Expanda **reservas → tables** para ver `restaurantes`, `mesas`, `clientes`, `reservas`.
+
+---
+
+## 🔌 Endpoints principais
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST  | `/restaurantes` | Criar restaurante |
+| GET   | `/restaurantes` | Listar restaurantes |
+| GET   | `/restaurantes/{id}` | Detalhar restaurante |
+| GET   | `/restaurantes/{restauranteId}/mesas` | Listar mesas do restaurante |
+| GET   | `/restaurantes/{restauranteId}/disponibilidade?data=&inicio=&fim=` | Disponibilidade de mesas |
+| POST  | `/mesas` | Cadastrar mesa/sala |
+| POST  | `/clientes` | Cadastrar cliente |
+| GET   | `/clientes` | Listar clientes |
+| POST  | `/reservas` | Criar reserva (status inicial `AGENDADA`) |
+| GET   | `/reservas?data=&status=` | Listar reservas (filtros opcionais) |
+| GET   | `/reservas/{id}` | Detalhar reserva |
+| PATCH | `/reservas/{id}` | Atualizar status da reserva |
+
+### Exemplo — criar reserva
+
+```bash
+curl -X POST http://localhost:8080/reservas \
+  -H "Content-Type: application/json" \
+  -d '{
+        "clienteId": 1,
+        "mesaId": 12,
+        "dataReserva": "2026-07-20",
+        "horaInicio": "19:30",
+        "horaFim": "21:30",
+        "pessoas": 4,
+        "observacao": "Aniversario"
+      }'
+```
+
+### Exemplo — atualizar status
+
+```bash
+curl -X PATCH http://localhost:8080/reservas/1 \
+  -H "Content-Type: application/json" \
+  -d '{"status":"CONFIRMADA"}'
+```
+
+---
+
+## 🗂️ Estrutura do projeto
+
+```
+.
+├── docker-compose.yml              # MySQL 8.4 containerizado
+├── pom.xml                         # dependências e build (Maven)
+├── mvnw / mvnw.cmd / .mvn/         # Maven Wrapper (baixa o Maven sozinho)
+└── src/main/
+    ├── java/io/duranium/reservas/
+    │   ├── ReservasApplication.java   # ponto de entrada
+    │   ├── model/          # entidades JPA + enums (Restaurante, Mesa, Cliente, Reserva…)
+    │   ├── repository/     # Spring Data JPA (consultas de conflito e disponibilidade)
+    │   ├── dto/            # records de request/response
+    │   ├── service/        # regras de negócio
+    │   ├── controller/     # endpoints REST
+    │   └── exception/      # exceções de domínio + handler global
+    └── resources/
+        ├── application.properties   # configuração (datasource MySQL, JPA…)
+        ├── data.sql                 # dados de exemplo (seed idempotente)
+        └── static/                  # protótipo web (index.html, styles.css, app.js)
+```
+
+---
+
+## 🔮 Possíveis melhorias futuras
+
+- 🔐 **Autenticação e autorização** com Spring Security + JWT (perfis restaurante/cliente).
+- 📚 **Documentação interativa** da API com Swagger/OpenAPI (springdoc).
+- ✅ **Testes automatizados** — JUnit 5 + Mockito (unitários) e Testcontainers (integração com MySQL real).
+- 🗃️ **Migrations** versionadas com Flyway ou Liquibase (em vez de `ddl-auto`).
+- 🔁 **CI/CD** com GitHub Actions (build + testes a cada push).
+- 🔔 Lembretes automáticos, avaliações de restaurante, relatórios de ocupação, cupons e pagamentos online.
+- 📄 **Paginação e ordenação** nas listagens.
+
+---
+
+## 📝 Licença
+
+Distribuído sob a licença **MIT**. Veja o arquivo [`LICENSE`](LICENSE) para mais detalhes.
