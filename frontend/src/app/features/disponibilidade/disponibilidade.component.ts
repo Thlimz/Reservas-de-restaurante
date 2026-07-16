@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Disponibilidade } from '../../core/models/models';
@@ -34,7 +34,11 @@ export class DisponibilidadeComponent {
 
   constructor() {
     // limpa o resultado ao trocar de restaurante
-    effect(() => { this.restAtivo.ativoId(); this.resultado.set(null); this.consulta.set(null); });
+    // untracked: escrever em signal dentro de effect lanca NG0600 no Angular 18
+    effect(() => {
+      this.restAtivo.ativoId();
+      untracked(() => { this.resultado.set(null); this.consulta.set(null); });
+    });
   }
 
   protected verificar(): void {

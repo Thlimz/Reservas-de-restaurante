@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiError, Mesa, TipoMesa } from '../../core/models/models';
 import { MesaService } from '../../core/services/mesa.service';
@@ -27,7 +27,8 @@ export class MesasComponent {
   protected ativo = true;
   protected erroNumero = signal<string | null>(null);
 
-  constructor() { effect(() => { this.restAtivo.ativoId(); this.carregar(); }); }
+  // untracked: escrever em signal dentro de effect lanca NG0600 no Angular 18
+  constructor() { effect(() => { this.restAtivo.ativoId(); untracked(() => this.carregar()); }); }
 
   protected carregar(): void {
     const id = this.restAtivo.ativoId();

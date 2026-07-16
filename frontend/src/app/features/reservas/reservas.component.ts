@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -51,11 +51,15 @@ export class ReservasComponent {
   );
 
   constructor() {
-    // recarrega lista + mesas quando o restaurante ativo muda
+    // recarrega lista + mesas quando o restaurante ativo muda.
+    // untracked: escrever em signal dentro de effect lanca NG0600 no Angular 18,
+    // e evita que os signals de filtro virem dependencias do efeito.
     effect(() => {
       const id = this.restAtivo.ativoId();
-      if (id != null) { this.mesaSrv.listar(id).subscribe((m) => this.mesas.set(m)); }
-      this.carregar();
+      untracked(() => {
+        if (id != null) { this.mesaSrv.listar(id).subscribe((m) => this.mesas.set(m)); }
+        this.carregar();
+      });
     });
     this.clienteSrv.listar().subscribe((c) => this.clientes.set(c));
     // pré-preenchimento vindo da tela de Disponibilidade
