@@ -43,6 +43,17 @@ nbbuild/
 nbdist/
 .nb-gradle/
 
+# ===== Front-end (Angular / Node) =====
+frontend/node_modules/
+frontend/node/
+frontend/dist/
+frontend/.angular/
+npm-debug.log*
+yarn-error.log*
+
+# Bundle gerado pelo "ng build" (artefato de build, reconstruido pelo Maven)
+src/main/resources/static/
+
 # ===== Banco de dados / dados locais =====
 data/
 *.mv.db

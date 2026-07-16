@@ -19,6 +19,11 @@
 
     <properties>
         <java.version>17</java.version>
+        <!-- Node/npm usados para compilar o front-end Angular (baixados pelo plugin,
+             nao exigem instalacao global). Use -Dfrontend.skip=true para pular o build do front. -->
+        <frontend.skip>false</frontend.skip>
+        <frontend.node.version>v22.11.0</frontend.node.version>
+        <frontend.npm.version>10.9.0</frontend.npm.version>
     </properties>
 
     <dependencies>
@@ -53,6 +58,56 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!--
+                Compila o front-end Angular durante o build do Maven.
+                O plugin baixa o proprio Node/npm em frontend/node, entao quem clonar o
+                repositorio nao precisa ter Node instalado: um "mvnw spring-boot:run" ja
+                gera o bundle em src/main/resources/static, servido pelo Spring.
+            -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.1</version>
+                <configuration>
+                    <workingDirectory>frontend</workingDirectory>
+                    <installDirectory>frontend</installDirectory>
+                    <skip>${frontend.skip}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>${frontend.node.version}</nodeVersion>
+                            <npmVersion>${frontend.npm.version}</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>install --no-audit --no-fund</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
