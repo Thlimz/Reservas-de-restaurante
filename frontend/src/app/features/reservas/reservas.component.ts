@@ -79,7 +79,7 @@ export class ReservasComponent {
   protected carregar(): void {
     this.loading.set(true);
     this.reservaSrv
-      .listar({ data: this.filtroData(), status: this.filtroStatus() })
+      .listar({ data: this.filtroData(), status: this.filtroStatus(), restauranteId: this.restAtivo.ativoId() })
       .subscribe({
         next: (list) => { this.reservas.set(this.doRestauranteAtivo(list)); this.loading.set(false); },
         error: () => this.loading.set(false),

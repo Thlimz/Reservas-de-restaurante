@@ -19,19 +19,35 @@ export class RestaurantesComponent {
   protected nome = '';
   protected endereco = '';
   protected telefone = '';
-  protected erroNome = signal<string | null>(null);
+  protected usuario = '';
+  protected senha = '';
+  protected erros = signal<Record<string, string>>({});
 
   protected selecionar(r: Restaurante): void {
     this.restAtivo.setAtivo(r.id);
     this.toast.info('Restaurante ativo: ' + r.nome);
   }
 
+  protected erro(campo: string): string | null { return this.erros()[campo] ?? null; }
+
   protected criar(): void {
-    this.erroNome.set(null);
-    if (!this.nome.trim()) { this.erroNome.set('Informe o nome'); return; }
-    this.restSrv.criar({ nome: this.nome.trim(), endereco: this.endereco, telefone: this.telefone }).subscribe({
-      next: (novo) => { this.restAtivo.adicionar(novo); this.toast.success('Restaurante ' + novo.nome + ' criado.'); this.nome = ''; this.endereco = ''; this.telefone = ''; },
-      error: (e: ApiError) => { if (e.camposInvalidos['nome']) { this.erroNome.set(e.camposInvalidos['nome']); } },
+    const pendentes: Record<string, string> = {};
+    if (!this.nome.trim()) { pendentes['nome'] = 'Informe o nome'; }
+    if (!this.usuario.trim()) { pendentes['usuario'] = 'Informe o usuário de acesso'; }
+    if (this.senha.length < 6) { pendentes['senha'] = 'A senha deve ter no mínimo 6 caracteres'; }
+    this.erros.set(pendentes);
+    if (Object.keys(pendentes).length) { return; }
+
+    this.restSrv.criar({
+      nome: this.nome.trim(), endereco: this.endereco, telefone: this.telefone,
+      usuario: this.usuario.trim(), senha: this.senha,
+    }).subscribe({
+      next: (novo) => {
+        this.restAtivo.adicionar(novo);
+        this.toast.success('Restaurante ' + novo.nome + ' criado com o login "' + this.usuario.trim() + '".');
+        this.nome = ''; this.endereco = ''; this.telefone = ''; this.usuario = ''; this.senha = '';
+      },
+      error: (e: ApiError) => { this.erros.set(e.camposInvalidos ?? {}); },
     });
   }
 }

@@ -2,11 +2,22 @@
   <aside class="card">
     <h2 style="font-size:18px;margin-bottom:16px">Novo restaurante</h2>
     <form class="stack" (ngSubmit)="criar()">
-      <label class="field">Nome<input class="input" [class.invalid]="!!erroNome()" type="text" name="nome" [(ngModel)]="nome" required /></label>
-      @if (erroNome()) { <div class="err">{{ erroNome() }}</div> }
+      <label class="field">Nome<input class="input" [class.invalid]="!!erro('nome')" type="text" name="nome" [(ngModel)]="nome" required /></label>
+      @if (erro('nome')) { <div class="err">{{ erro('nome') }}</div> }
       <label class="field">Endereço<input class="input" type="text" name="endereco" [(ngModel)]="endereco" /></label>
       <label class="field">Telefone<input class="input" type="text" name="telefone" [(ngModel)]="telefone" /></label>
-      <button class="btn btn-primary" type="submit">Criar</button>
+
+      <div style="border-top:1px dashed var(--border);padding-top:14px;margin-top:4px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:10px">ACESSO DO RESTAURANTE</div>
+        <div class="stack">
+          <label class="field">Usuário<input class="input" [class.invalid]="!!erro('usuario')" type="text" name="usuario" [(ngModel)]="usuario" autocomplete="off" required /></label>
+          @if (erro('usuario')) { <div class="err">{{ erro('usuario') }}</div> }
+          <label class="field">Senha<input class="input" [class.invalid]="!!erro('senha')" type="password" name="senha" [(ngModel)]="senha" autocomplete="new-password" required /></label>
+          @if (erro('senha')) { <div class="err">{{ erro('senha') }}</div> }
+        </div>
+      </div>
+
+      <button class="btn btn-primary" type="submit">Criar restaurante + login</button>
     </form>
   </aside>
   <div style="min-width:0">

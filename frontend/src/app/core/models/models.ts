@@ -1,14 +1,26 @@
 export type TipoMesa = 'MESA' | 'SALA';
 export type StatusReserva = 'AGENDADA' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA';
+export type Papel = 'ADMIN' | 'RESTAURANTE';
+
+/** Sessao autenticada devolvida por /api/auth/login. */
+export interface Sessao {
+  token: string;
+  username: string;
+  papel: Papel;
+  restauranteId: number | null;
+  restauranteNome: string | null;
+}
 
 export interface Restaurante { id: number; nome: string; endereco: string; telefone: string; }
-export interface RestauranteInput { nome: string; endereco: string; telefone: string; }
+/** Criacao de restaurante (ADMIN) inclui as credenciais de acesso dele. */
+export interface RestauranteInput { nome: string; endereco: string; telefone: string; usuario: string; senha: string; }
 
 export interface Mesa { id: number; restauranteId: number; numero: number; capacidade: number; tipo: TipoMesa; ativo: boolean; }
 export interface MesaInput { restauranteId: number; numero: number; capacidade: number; tipo: TipoMesa; ativo: boolean; }
 
-export interface Cliente { id: number; nome: string; telefone: string; email: string; }
-export interface ClienteInput { nome: string; telefone: string; email: string; }
+export interface Cliente { id: number; nome: string; telefone: string; email: string; restauranteId: number | null; }
+/** restauranteId e ignorado para logins de restaurante (o back usa o do token). */
+export interface ClienteInput { nome: string; telefone: string; email: string; restauranteId?: number | null; }
 
 export interface Disponibilidade { mesaId: number; numero: number; capacidade: number; tipo: TipoMesa; disponivel: boolean; }
 
