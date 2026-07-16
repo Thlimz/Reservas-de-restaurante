@@ -1,0 +1,53 @@
+<section aria-label="Disponibilidade">
+  <h1 style="font-size:26px;margin-bottom:4px">Disponibilidade</h1>
+  <p class="muted" style="font-size:13.5px;margin:0">Escolha a janela e veja, num relance, o que está livre para reservar.</p>
+
+  <form class="card" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin:16px 0 20px" (ngSubmit)="verificar()">
+    <label class="field">Data<input class="input" style="width:auto" type="date" name="data" [(ngModel)]="data" required /></label>
+    <label class="field">Início<input class="input" style="width:auto" type="time" name="inicio" [(ngModel)]="inicio" required /></label>
+    <label class="field">Fim<input class="input" style="width:auto" type="time" name="fim" [(ngModel)]="fim" required /></label>
+    <label class="field">Pessoas<input class="input" style="width:88px" type="number" min="1" name="pessoas" [(ngModel)]="pessoas" /></label>
+    <button class="btn btn-primary" type="submit">Verificar</button>
+    <div style="margin-left:auto;display:flex;gap:16px;align-items:center;font-size:12px" class="muted">
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></span>Livre</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:var(--danger)"></span>Ocupada</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:var(--muted)"></span>Inativa</span>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <app-spinner [count]="6" [height]="132" [grid]="true"></app-spinner>
+  } @else if (resultado() === null) {
+    <div class="empty">
+      <div style="font-family:var(--serif);font-size:19px;color:var(--text);margin-bottom:6px">Pronto para consultar</div>
+      <div style="font-size:14px">Defina data e horário acima e clique em <b style="color:var(--text)">Verificar</b>.</div>
+    </div>
+  } @else {
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-size:14px;font-weight:600">{{ formatDateBr(consulta()!.data) }} · {{ consulta()!.inicio }}–{{ consulta()!.fim }}</span>
+      <span class="muted" style="font-size:13px">{{ livres() }} de {{ resultado()!.length }} mesas livres</span>
+    </div>
+    <div class="cards-grid">
+      @for (m of resultado(); track m.mesaId) {
+        <button (click)="reservar(m)" [disabled]="!reservavel(m)"
+          [style.background]="estado(m).bg" [style.border]="'1.5px solid ' + estado(m).border"
+          [style.opacity]="reservavel(m) ? 1 : (m.disponivel ? 1 : 0.72)"
+          style="text-align:left;font-family:inherit;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;color:var(--text);cursor:pointer;animation:fadeUp .25s ease"
+          [style.cursor]="reservavel(m) ? 'pointer' : 'default'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-family:var(--serif);font-size:24px;font-weight:600;line-height:1">{{ m.numero }}</div>
+            <span [style.background]="estado(m).badgeBg" [style.color]="estado(m).badgeFg" style="font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:3px 8px;border-radius:999px">{{ estado(m).label }}</span>
+          </div>
+          <div class="muted" style="font-size:12.5px;margin-top:8px">{{ tipoLabel(m) }} · {{ m.capacidade }} lugares</div>
+          @if (reservavel(m)) {
+            <div style="font-size:12px;font-weight:600;color:var(--accent);margin-top:12px">Reservar esta mesa →</div>
+          } @else if (m.disponivel && !capacidadeOk(m)) {
+            <div style="font-size:11.5px;color:var(--warn);margin-top:12px">Capacidade insuficiente</div>
+          } @else {
+            <div class="muted" style="font-size:12px;margin-top:12px">Indisponível nesta janela</div>
+          }
+        </button>
+      }
+    </div>
+  }
+</section>

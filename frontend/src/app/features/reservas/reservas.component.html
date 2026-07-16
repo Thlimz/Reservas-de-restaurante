@@ -1,0 +1,120 @@
+<section class="grid-2" aria-label="Reservas">
+  <div style="min-width:0">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+      <h1 style="font-size:26px">Reservas</h1>
+      <span class="muted" style="font-size:13px">{{ reservas().length }} {{ reservas().length === 1 ? 'reserva' : 'reservas' }}</span>
+      <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+        <input class="input" style="width:auto;margin-top:0" type="date" [value]="filtroData()" (change)="aplicarFiltroData($any($event.target).value)" aria-label="Filtrar por data" />
+        <select class="input" style="width:auto;margin-top:0" [value]="filtroStatus()" (change)="aplicarFiltroStatus($any($event.target).value)" aria-label="Filtrar por status">
+          <option value="">Todos os status</option>
+          <option value="AGENDADA">Agendada</option>
+          <option value="CONFIRMADA">Confirmada</option>
+          <option value="FINALIZADA">Finalizada</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
+        @if (temFiltro()) {
+          <button class="btn btn-ghost btn-sm" (click)="limparFiltros()">Limpar</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <app-spinner [count]="3" [height]="96"></app-spinner>
+    } @else if (reservas().length === 0) {
+      <app-empty-state titulo="Nenhuma reserva por aqui"
+        [descricao]="temFiltro() ? 'Ajuste os filtros de data e status.' : 'Crie a primeira reserva no formulário ao lado.'"></app-empty-state>
+    } @else {
+      <div class="stack">
+        @for (r of reservas(); track r.id) {
+          <article style="display:flex;gap:16px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--radius-sm);padding:15px 17px;box-shadow:var(--shadow);animation:fadeUp .25s ease">
+            <div style="min-width:86px">
+              <div style="font-family:var(--serif);font-size:22px;font-weight:600;line-height:1.05">{{ r.horaInicio }}</div>
+              <div class="muted" style="font-size:12px">até {{ r.horaFim }}</div>
+              <div class="muted" style="font-size:12px;margin-top:3px">{{ formatDateBr(r.dataReserva) }}</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:15.5px">{{ r.cliente.nome }}</div>
+              <div class="muted" style="font-size:12.5px">{{ r.cliente.telefone }}</div>
+              <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">
+                <span class="chip">Mesa {{ r.mesa.numero }}</span>
+                <span class="chip muted">{{ r.pessoas }} pessoas</span>
+              </div>
+              @if (r.observacao) {
+                <div class="muted" style="font-size:12.5px;margin-top:8px;font-style:italic">“{{ r.observacao }}”</div>
+              }
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px;min-width:132px">
+              <app-status-badge [status]="r.status"></app-status-badge>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+                @if (podeConfirmar(r)) {
+                  <button class="btn btn-primary btn-sm" (click)="mudarStatus(r, 'CONFIRMADA', 'confirmada')">Confirmar</button>
+                }
+                @if (podeFinalizar(r)) {
+                  <button class="btn btn-ok btn-sm" (click)="mudarStatus(r, 'FINALIZADA', 'finalizada')">Finalizar</button>
+                }
+                @if (podeCancelar(r)) {
+                  <button class="btn btn-danger btn-sm" (click)="mudarStatus(r, 'CANCELADA', 'cancelada')">Cancelar</button>
+                }
+                @if (terminal(r)) {
+                  <span class="muted" style="font-size:12px">Sem ações</span>
+                }
+              </div>
+              @if (foraDaJanela(r)) {
+                <span style="font-size:10.5px;color:var(--warn);text-align:right;max-width:132px">Fora da janela de cancelamento (&lt;2h)</span>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+
+  <aside class="card" style="position:sticky;top:118px">
+    <h2 style="font-size:18px;margin-bottom:4px">Nova reserva</h2>
+    <p class="muted" style="font-size:12.5px;margin:0 0 16px">Preencha e confirme a disponibilidade.</p>
+    <form class="stack" [formGroup]="form" (ngSubmit)="criar()">
+      <label class="field">Cliente
+        <select class="input" formControlName="clienteId" [class.invalid]="invalido('clienteId')">
+          <option [ngValue]="null">Selecione…</option>
+          @for (c of clientes(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nome }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">Mesa
+        <select class="input" formControlName="mesaId" [class.invalid]="invalido('mesaId')">
+          <option [ngValue]="null">Selecione…</option>
+          @for (m of mesas(); track m.id) {
+            <option [ngValue]="m.id">Nº {{ m.numero }} · {{ m.capacidade }} lugares{{ m.ativo ? '' : ' (inativa)' }}</option>
+          }
+        </select>
+      </label>
+      <div style="display:flex;gap:10px">
+        <label class="field" style="flex:1">Data
+          <input class="input" type="date" formControlName="dataReserva" />
+        </label>
+        <label class="field" style="width:92px">Pessoas
+          <input class="input" type="number" min="1" formControlName="pessoas" [class.invalid]="invalido('pessoas')" />
+        </label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <label class="field" style="flex:1">Início
+          <input class="input" type="time" formControlName="horaInicio" />
+        </label>
+        <label class="field" style="flex:1">Fim
+          <input class="input" type="time" formControlName="horaFim" [class.invalid]="form.errors?.['horaFim']" />
+        </label>
+      </div>
+      <label class="field">Observação
+        <input class="input" type="text" formControlName="observacao" placeholder="Aniversário, cadeira de bebê…" />
+      </label>
+      @if (form.errors?.['horaFim']) {
+        <div class="err-box">A hora final deve ser após a inicial.</div>
+      }
+      @if (erroServidor('clienteId') || erroServidor('mesaId') || erroServidor('pessoas') || erroServidor('dataReserva')) {
+        <div class="err-box">{{ erroServidor('clienteId') || erroServidor('mesaId') || erroServidor('pessoas') || erroServidor('dataReserva') }}</div>
+      }
+      <button class="btn btn-primary" type="submit" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Criar reserva' }}</button>
+    </form>
+  </aside>
+</section>

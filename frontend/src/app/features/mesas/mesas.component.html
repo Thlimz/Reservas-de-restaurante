@@ -1,0 +1,47 @@
+<section class="grid-2-rev" aria-label="Mesas">
+  <aside class="card">
+    <h2 style="font-size:18px;margin-bottom:16px">Cadastrar mesa / sala</h2>
+    <form class="stack" (ngSubmit)="criar()">
+      <div style="display:flex;gap:10px">
+        <label class="field" style="flex:1">Número<input class="input" [class.invalid]="!!erroNumero()" type="number" min="1" name="numero" [(ngModel)]="numero" required /></label>
+        <label class="field" style="flex:1">Capacidade<input class="input" type="number" min="1" name="capacidade" [(ngModel)]="capacidade" required /></label>
+      </div>
+      @if (erroNumero()) { <div class="err">{{ erroNumero() }}</div> }
+      <label class="field">Tipo
+        <select class="input" name="tipo" [(ngModel)]="tipo">
+          <option value="MESA">Mesa</option>
+          <option value="SALA">Sala privativa</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;cursor:pointer">
+        <input type="checkbox" name="ativo" [(ngModel)]="ativo" style="width:17px;height:17px;accent-color:var(--accent)" /> Ativa para reservas
+      </label>
+      <button class="btn btn-primary" type="submit">Cadastrar</button>
+    </form>
+  </aside>
+  <div style="min-width:0">
+    <h1 style="font-size:24px;margin-bottom:16px">Mesas de {{ restAtivo.ativo()?.nome }}</h1>
+    @if (loading()) {
+      <app-spinner [count]="6" [height]="110" [grid]="true"></app-spinner>
+    } @else if (mesas().length === 0) {
+      <app-empty-state titulo="Sem mesas cadastradas" descricao="Cadastre a primeira mesa ao lado."></app-empty-state>
+    } @else {
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px">
+        @for (m of mesas(); track m.id) {
+          <div class="card" style="padding:15px" [style.opacity]="m.ativo ? 1 : 0.62">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:var(--serif);font-size:22px;font-weight:600">Nº {{ m.numero }}</span>
+              <span [style.background]="m.tipo === 'SALA' ? 'color-mix(in oklab,var(--accent) 14%,transparent)' : 'var(--surface-2)'"
+                    [style.color]="m.tipo === 'SALA' ? 'var(--accent)' : 'var(--muted)'"
+                    style="font-size:10px;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:999px">{{ m.tipo }}</span>
+            </div>
+            <div class="muted" style="font-size:13px;margin-top:9px">{{ m.capacidade }} lugares</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;font-weight:600" [style.color]="m.ativo ? 'var(--ok)' : 'var(--muted)'">
+              <span aria-hidden="true">{{ m.ativo ? '\u25CF' : '\u25CB' }}</span>{{ m.ativo ? 'Ativa' : 'Inativa' }}
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>

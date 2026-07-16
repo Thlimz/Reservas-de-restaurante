@@ -1,0 +1,29 @@
+<section class="grid-2-rev" aria-label="Clientes">
+  <aside class="card">
+    <h2 style="font-size:18px;margin-bottom:16px">Cadastrar cliente</h2>
+    <form class="stack" (ngSubmit)="criar()">
+      <label class="field">Nome<input class="input" [class.invalid]="!!erroNome()" type="text" name="nome" [(ngModel)]="nome" required /></label>
+      @if (erroNome()) { <div class="err">{{ erroNome() }}</div> }
+      <label class="field">Telefone<input class="input" type="text" name="telefone" [(ngModel)]="telefone" placeholder="(11) 99999-9999" /></label>
+      <label class="field">E-mail<input class="input" type="email" name="email" [(ngModel)]="email" placeholder="cliente@email.com" /></label>
+      <button class="btn btn-primary" type="submit">Cadastrar</button>
+    </form>
+  </aside>
+  <div style="min-width:0">
+    <h1 style="font-size:24px;margin-bottom:16px">Clientes</h1>
+    @if (loading()) {
+      <app-spinner [count]="4" [height]="64"></app-spinner>
+    } @else if (clientes().length === 0) {
+      <app-empty-state titulo="Nenhum cliente ainda" descricao="Cadastre o primeiro cliente ao lado."></app-empty-state>
+    } @else {
+      <div class="stack">
+        @for (c of clientes(); track c.id) {
+          <div style="display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:13px 16px;animation:fadeUp .25s ease">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:16px;color:var(--accent)">{{ inicial(c.nome) }}</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14.5px">{{ c.nome }}</div><div class="muted" style="font-size:12.5px">{{ contato(c) }}</div></div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>
