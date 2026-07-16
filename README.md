@@ -151,25 +151,28 @@ Com o container no ar (`docker compose up -d`):
 
 ## 🔌 Endpoints principais
 
+> Toda a API fica sob o prefixo **`/api`**. As rotas de raiz ficam reservadas ao roteador do
+> front-end (SPA), evitando colisão entre, por exemplo, a tela `/reservas` e o endpoint da API.
+
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST  | `/restaurantes` | Criar restaurante |
-| GET   | `/restaurantes` | Listar restaurantes |
-| GET   | `/restaurantes/{id}` | Detalhar restaurante |
-| GET   | `/restaurantes/{restauranteId}/mesas` | Listar mesas do restaurante |
-| GET   | `/restaurantes/{restauranteId}/disponibilidade?data=&inicio=&fim=` | Disponibilidade de mesas |
-| POST  | `/mesas` | Cadastrar mesa/sala |
-| POST  | `/clientes` | Cadastrar cliente |
-| GET   | `/clientes` | Listar clientes |
-| POST  | `/reservas` | Criar reserva (status inicial `AGENDADA`) |
-| GET   | `/reservas?data=&status=` | Listar reservas (filtros opcionais) |
-| GET   | `/reservas/{id}` | Detalhar reserva |
-| PATCH | `/reservas/{id}` | Atualizar status da reserva |
+| POST  | `/api/restaurantes` | Criar restaurante |
+| GET   | `/api/restaurantes` | Listar restaurantes |
+| GET   | `/api/restaurantes/{id}` | Detalhar restaurante |
+| GET   | `/api/restaurantes/{restauranteId}/mesas` | Listar mesas do restaurante |
+| GET   | `/api/restaurantes/{restauranteId}/disponibilidade?data=&inicio=&fim=` | Disponibilidade de mesas |
+| POST  | `/api/mesas` | Cadastrar mesa/sala |
+| POST  | `/api/clientes` | Cadastrar cliente |
+| GET   | `/api/clientes` | Listar clientes |
+| POST  | `/api/reservas` | Criar reserva (status inicial `AGENDADA`) |
+| GET   | `/api/reservas?data=&status=` | Listar reservas (filtros opcionais) |
+| GET   | `/api/reservas/{id}` | Detalhar reserva |
+| PATCH | `/api/reservas/{id}` | Atualizar status da reserva |
 
 ### Exemplo — criar reserva
 
 ```bash
-curl -X POST http://localhost:8080/reservas \
+curl -X POST http://localhost:8080/api/reservas \
   -H "Content-Type: application/json" \
   -d '{
         "clienteId": 1,
@@ -185,7 +188,7 @@ curl -X POST http://localhost:8080/reservas \
 ### Exemplo — atualizar status
 
 ```bash
-curl -X PATCH http://localhost:8080/reservas/1 \
+curl -X PATCH http://localhost:8080/api/reservas/1 \
   -H "Content-Type: application/json" \
   -d '{"status":"CONFIRMADA"}'
 ```
@@ -202,6 +205,7 @@ curl -X PATCH http://localhost:8080/reservas/1 \
 └── src/main/
     ├── java/io/duranium/reservas/
     │   ├── ReservasApplication.java   # ponto de entrada
+    │   ├── config/         # configuração web (prefixo /api, fallback SPA)
     │   ├── model/          # entidades JPA + enums (Restaurante, Mesa, Cliente, Reserva…)
     │   ├── repository/     # Spring Data JPA (consultas de conflito e disponibilidade)
     │   ├── dto/            # records de request/response
