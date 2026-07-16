@@ -28,7 +28,12 @@ Acompanha um **protótipo web** (servido pelo próprio Spring) para operar tudo 
 
 ## ✨ Funcionalidades
 
-- **Restaurantes** — cadastro e listagem.
+- **Login por restaurante (multi-tenant)** — cada restaurante tem o próprio acesso e enxerga
+  **apenas os próprios dados** (mesas, clientes, reservas, disponibilidade). Autenticação via
+  **JWT** (Spring Security), com dois papéis:
+  - `ADMIN` — acesso total; único que gerencia restaurantes e cria os logins deles;
+  - `RESTAURANTE` — opera somente o próprio restaurante (escopo aplicado no back-end).
+- **Restaurantes** — cadastro e listagem (exclusivo do ADMIN; o cadastro já cria o login do restaurante).
 - **Mesas/Salas** — cadastro com capacidade e tipo (`MESA` ou `SALA`), listagem por restaurante.
 - **Clientes** — cadastro e listagem.
 - **Reservas** — criação com validação completa de regras de negócio:
@@ -52,6 +57,7 @@ Acompanha um **protótipo web** (servido pelo próprio Spring) para operar tudo 
 - **Java 17** (bytecode `release 17`; validado rodando também no JDK 25)
 - **Spring Boot 3.3.5**
 - **Spring Web** — API REST
+- **Spring Security + JWT (jjwt)** — autenticação stateless e autorização por papel
 - **Spring Data JPA** + **Hibernate 6.5** — persistência
 - **Jakarta Bean Validation** — validação de payloads
 - **MySQL 8.4**
@@ -150,6 +156,18 @@ Para pular o build do front quando ele já estiver compilado:
 
 - **Aplicação:** <http://localhost:8080/>
 
+**4. Faça login** com um dos usuários de demonstração (criados automaticamente no seed):
+
+| Usuário | Senha | Papel |
+|---------|-------|-------|
+| `Th` | `AdminTh@01` | ADMIN (acesso total + gestão de restaurantes) |
+| `cantina` | `Cantina@01` | RESTAURANTE (Cantina da Nona) |
+| `sushi` | `Sushi@01` | RESTAURANTE (Sushi Duranium) |
+
+> ⚠️ Credenciais de **demonstração** — as senhas são armazenadas como hash BCrypt.
+> Em produção, troque a senha do admin via propriedade `app.seed.admin-senha` e defina
+> um segredo JWT forte via variável de ambiente `JWT_SECRET`.
+
 > **Credenciais:** o app conecta como `root`/`root` por padrão. Se a senha do seu MySQL for outra,
 > defina antes de rodar: `DB_USER` e `DB_PASSWORD` (variáveis de ambiente) — ou edite
 > `src/main/resources/application.properties`.
@@ -197,11 +215,17 @@ Com o container no ar (`docker compose up -d`):
 
 > Toda a API fica sob o prefixo **`/api`**. As rotas de raiz ficam reservadas ao roteador do
 > front-end (SPA), evitando colisão entre, por exemplo, a tela `/reservas` e o endpoint da API.
+>
+> **Autenticação:** exceto `/api/auth/login`, todas as rotas exigem o header
+> `Authorization: Bearer <token>`. Logins de restaurante são automaticamente limitados aos
+> próprios dados; tentativas fora do escopo retornam **403**.
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST  | `/api/restaurantes` | Criar restaurante |
-| GET   | `/api/restaurantes` | Listar restaurantes |
+| POST  | `/api/auth/login` | Autenticar (`{username, senha}` → token JWT) |
+| GET   | `/api/auth/me` | Dados da sessão atual |
+| POST  | `/api/restaurantes` | Criar restaurante **+ login dele** (só ADMIN) |
+| GET   | `/api/restaurantes` | Listar restaurantes (só ADMIN) |
 | GET   | `/api/restaurantes/{id}` | Detalhar restaurante |
 | GET   | `/api/restaurantes/{restauranteId}/mesas` | Listar mesas do restaurante |
 | GET   | `/api/restaurantes/{restauranteId}/disponibilidade?data=&inicio=&fim=` | Disponibilidade de mesas |
