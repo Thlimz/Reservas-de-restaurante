@@ -1,10 +1,13 @@
 # 🍽️ Sistema de Reservas para Restaurantes
 
-API REST e protótipo web para gerenciar **restaurantes, mesas/salas, clientes e reservas**,
+Aplicação full stack para gerenciar **restaurantes, mesas/salas, clientes e reservas**,
 calculando a disponibilidade em tempo real e evitando conflitos de horário.
+API REST em **Spring Boot** + SPA em **Angular**, servidos na mesma origem.
 
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen)
+![Angular](https://img.shields.io/badge/Angular-18-dd0031)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-blue)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -54,16 +57,29 @@ Acompanha um **protótipo web** (servido pelo próprio Spring) para operar tudo 
 - **MySQL 8.4**
 - **Docker** / **Docker Compose** — banco de dados containerizado
 - **Maven** (com **Maven Wrapper** — não exige Maven instalado)
-- **HTML5 + CSS3 + JavaScript** — protótipo de front-end
+
+**Front-end**
+
+- **Angular 18** — standalone components, signals, novo control flow (`@if` / `@for`)
+- **TypeScript 5.5** em modo `strict`
+- **RxJS** + `HttpClient`, com interceptor para tratamento centralizado de erros
+- **CSS autoral** (sem bibliotecas de UI), com tema claro/escuro
+- **frontend-maven-plugin** — integra o build do Angular ao ciclo do Maven
 
 ---
 
 ## 🏗️ Arquitetura
 
-Aplicação em **camadas**, com fluxo de dependência unidirecional:
+SPA Angular consumindo uma API Spring Boot em **camadas**, com fluxo de dependência
+unidirecional. Ambos são servidos na **mesma origem** (`:8080`), o que elimina CORS:
+o Spring devolve o `index.html` para as rotas do roteador Angular e reserva o prefixo
+`/api` para a API.
 
 ```
-      HTTP (JSON)
+     ┌──────────────┐
+     │   Angular    │  → SPA (components, services, signals)
+     └──────┬───────┘
+       HTTP (JSON) sob /api
           │
      ┌────▼─────┐
      │Controller│  → expõe os endpoints REST, valida o payload
@@ -97,7 +113,9 @@ Aplicação em **camadas**, com fluxo de dependência unidirecional:
 - **JDK 17+** — <https://adoptium.net/> (ou `winget install EclipseAdoptium.Temurin.17.JDK`)
 - **Docker Desktop** — para subir o MySQL (ou um MySQL 8+ instalado localmente)
 
-> Maven **não** é necessário: o projeto inclui o *Maven Wrapper* (`mvnw`/`mvnw.cmd`).
+> **Maven e Node não são necessários.** O projeto inclui o *Maven Wrapper* (`mvnw`/`mvnw.cmd`),
+> e o `frontend-maven-plugin` baixa uma cópia local do Node/npm em `frontend/node` para compilar
+> o Angular. Um único comando levanta tudo.
 
 ### Passo a passo
 
@@ -120,9 +138,17 @@ Confira com `docker ps` — deve aparecer como `healthy`.
 ./mvnw spring-boot:run
 ```
 
+Na primeira execução, o Maven baixa o Node, roda `npm install` e compila o Angular
+(o bundle é gerado em `src/main/resources/static/` e servido pelo Spring). Pode levar alguns minutos.
+Para pular o build do front quando ele já estiver compilado:
+
+```bash
+.\mvnw.cmd "-Dfrontend.skip=true" spring-boot:run
+```
+
 **3. Acesse:**
 
-- **Front-end (protótipo):** <http://localhost:8080/>
+- **Aplicação:** <http://localhost:8080/>
 
 > **Credenciais:** o app conecta como `root`/`root` por padrão. Se a senha do seu MySQL for outra,
 > defina antes de rodar: `DB_USER` e `DB_PASSWORD` (variáveis de ambiente) — ou edite
@@ -135,6 +161,24 @@ Confira com `docker ps` — deve aparecer como `healthy`.
 
 Abra a pasta no **IntelliJ IDEA** ou **VS Code** (extensões Java) e execute a classe
 `ReservasApplication`. A IDE já traz o Maven embutido.
+
+### Desenvolvimento do front-end (hot reload)
+
+Para iterar no Angular com recarregamento automático, rode os dois lados separadamente
+(aqui sim é preciso ter o **Node 18+** instalado):
+
+```bash
+# terminal 1 — back-end
+.\mvnw.cmd "-Dfrontend.skip=true" spring-boot:run
+
+# terminal 2 — front-end
+cd frontend
+npm install
+npm start
+```
+
+O app de desenvolvimento fica em <http://localhost:4200>, e o `proxy.conf.json` encaminha
+as chamadas `/api` para o back-end na porta 8080 — por isso não há CORS.
 
 ### Inspecionar o banco no DataGrip
 
@@ -200,8 +244,17 @@ curl -X PATCH http://localhost:8080/api/reservas/1 \
 ```
 .
 ├── docker-compose.yml              # MySQL 8.4 containerizado
-├── pom.xml                         # dependências e build (Maven)
+├── pom.xml                         # dependências e build (Maven + build do Angular)
 ├── mvnw / mvnw.cmd / .mvn/         # Maven Wrapper (baixa o Maven sozinho)
+├── frontend/                       # SPA Angular (TypeScript)
+│   ├── angular.json                # build emite direto em src/main/resources/static
+│   ├── proxy.conf.json             # dev: encaminha /api para :8080
+│   └── src/app/
+│       ├── core/models/            # interfaces espelhando os DTOs do back
+│       ├── core/services/          # HttpClient por recurso
+│       ├── core/interceptors/      # tratamento centralizado de erros da API
+│       ├── features/               # telas (reservas, disponibilidade, mesas…)
+│       └── shared/                 # componentes reutilizáveis (badge, toast…)
 └── src/main/
     ├── java/io/duranium/reservas/
     │   ├── ReservasApplication.java   # ponto de entrada
@@ -215,7 +268,7 @@ curl -X PATCH http://localhost:8080/api/reservas/1 \
     └── resources/
         ├── application.properties   # configuração (datasource MySQL, JPA…)
         ├── data.sql                 # dados de exemplo (seed idempotente)
-        └── static/                  # protótipo web (index.html, styles.css, app.js)
+        └── static/                  # bundle do Angular (gerado no build, não versionado)
 ```
 
 ---
