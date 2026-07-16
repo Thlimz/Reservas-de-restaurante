@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -38,6 +39,15 @@ public class ApiExceptionHandler {
         }
         corpo.put("camposInvalidos", campos);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo);
+    }
+
+    /**
+     * Rotas inexistentes (ex.: /api/qualquer-coisa) devem responder 404, e nao cair
+     * no handler generico como erro 500.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> tratarRotaInexistente(NoResourceFoundException ex) {
+        return montar(HttpStatus.NOT_FOUND, "Rota nao encontrada: /" + ex.getResourcePath());
     }
 
     @ExceptionHandler(Exception.class)
