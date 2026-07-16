@@ -2,7 +2,7 @@
 // Cliente da API de Reservas de Restaurante
 // ============================================================
 
-const API = ''; // mesma origem do backend
+const API = '/api'; // mesma origem do backend, sob o prefixo /api
 
 // ---------- Utilidades ----------
 async function api(metodo, caminho, corpo) {
