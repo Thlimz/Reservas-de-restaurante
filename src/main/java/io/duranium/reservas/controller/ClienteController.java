@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,9 +31,12 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteService.criar(req));
     }
 
-    /** GET /clientes -> Listar clientes (auxiliar) */
+    /**
+     * GET /clientes -> Listar clientes.
+     * Logins de restaurante veem apenas os proprios; ADMIN pode filtrar por restauranteId.
+     */
     @GetMapping
-    public List<ClienteResponse> listar() {
-        return clienteService.listar();
+    public List<ClienteResponse> listar(@RequestParam(required = false) Long restauranteId) {
+        return clienteService.listar(restauranteId);
     }
 }

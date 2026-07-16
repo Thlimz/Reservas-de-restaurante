@@ -11,7 +11,9 @@ public class ClienteDtos {
             String nome,
             String telefone,
             @Email(message = "E-mail invalido")
-            String email
+            String email,
+            /** Ignorado para logins de restaurante (usa o do token); obrigatorio para ADMIN. */
+            Long restauranteId
     ) {
     }
 
@@ -19,7 +21,8 @@ public class ClienteDtos {
             Long id,
             String nome,
             String telefone,
-            String email
+            String email,
+            Long restauranteId
     ) {
     }
 }

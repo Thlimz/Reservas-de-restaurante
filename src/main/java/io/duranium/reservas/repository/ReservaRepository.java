@@ -53,14 +53,17 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
                                  @Param("fim") LocalTime fim);
 
     /**
-     * Listagem de reservas com filtros opcionais de data e status.
+     * Listagem de reservas com filtros opcionais de data, status e restaurante
+     * (restauranteId e obrigatorio no escopo de logins de restaurante).
      */
     @Query("""
             SELECT r FROM Reserva r
             WHERE (:data IS NULL OR r.dataReserva = :data)
               AND (:status IS NULL OR r.status = :status)
+              AND (:restauranteId IS NULL OR r.mesa.restaurante.id = :restauranteId)
             ORDER BY r.dataReserva ASC, r.horaInicio ASC
             """)
     List<Reserva> buscarComFiltros(@Param("data") LocalDate data,
-                                   @Param("status") StatusReserva status);
+                                   @Param("status") StatusReserva status,
+                                   @Param("restauranteId") Long restauranteId);
 }

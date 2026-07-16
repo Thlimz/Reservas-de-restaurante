@@ -37,13 +37,17 @@ public class ReservaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(reservaService.criar(req));
     }
 
-    /** GET /reservas?data=&status= -> Listar reservas (filtros opcionais) */
+    /**
+     * GET /reservas?data=&status=&restauranteId= -> Listar reservas (filtros opcionais).
+     * Logins de restaurante recebem apenas as proprias reservas.
+     */
     @GetMapping
     public List<ReservaResponse> listar(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
-            @RequestParam(required = false) StatusReserva status) {
-        return reservaService.listar(data, status);
+            @RequestParam(required = false) StatusReserva status,
+            @RequestParam(required = false) Long restauranteId) {
+        return reservaService.listar(data, status, restauranteId);
     }
 
     /** GET /reservas/{id} -> Detalhar reserva */

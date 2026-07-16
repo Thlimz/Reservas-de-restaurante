@@ -6,6 +6,7 @@ import io.duranium.reservas.exception.RecursoNaoEncontradoException;
 import io.duranium.reservas.model.Mesa;
 import io.duranium.reservas.model.Restaurante;
 import io.duranium.reservas.repository.MesaRepository;
+import io.duranium.reservas.security.Escopo;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,13 +16,18 @@ public class MesaService {
 
     private final MesaRepository repository;
     private final RestauranteService restauranteService;
+    private final Escopo escopo;
 
-    public MesaService(MesaRepository repository, RestauranteService restauranteService) {
+    public MesaService(MesaRepository repository,
+                       RestauranteService restauranteService,
+                       Escopo escopo) {
         this.repository = repository;
         this.restauranteService = restauranteService;
+        this.escopo = escopo;
     }
 
     public MesaResponse criar(MesaRequest req) {
+        escopo.validarRestaurante(req.restauranteId());
         Restaurante restaurante = restauranteService.obter(req.restauranteId());
         Mesa mesa = new Mesa();
         mesa.setRestaurante(restaurante);
@@ -33,6 +39,7 @@ public class MesaService {
     }
 
     public List<MesaResponse> listarPorRestaurante(Long restauranteId) {
+        escopo.validarRestaurante(restauranteId);
         // Garante que o restaurante existe (404 caso contrario).
         restauranteService.obter(restauranteId);
         return repository.findByRestauranteIdOrderByNumeroAsc(restauranteId)

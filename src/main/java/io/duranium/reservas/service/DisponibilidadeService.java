@@ -5,6 +5,7 @@ import io.duranium.reservas.exception.RegraNegocioException;
 import io.duranium.reservas.model.Mesa;
 import io.duranium.reservas.repository.MesaRepository;
 import io.duranium.reservas.repository.ReservaRepository;
+import io.duranium.reservas.security.Escopo;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,13 +19,16 @@ public class DisponibilidadeService {
     private final MesaRepository mesaRepository;
     private final ReservaRepository reservaRepository;
     private final RestauranteService restauranteService;
+    private final Escopo escopo;
 
     public DisponibilidadeService(MesaRepository mesaRepository,
                                   ReservaRepository reservaRepository,
-                                  RestauranteService restauranteService) {
+                                  RestauranteService restauranteService,
+                                  Escopo escopo) {
         this.mesaRepository = mesaRepository;
         this.reservaRepository = reservaRepository;
         this.restauranteService = restauranteService;
+        this.escopo = escopo;
     }
 
     /**
@@ -33,6 +37,7 @@ public class DisponibilidadeService {
      */
     public List<MesaDisponibilidade> consultar(Long restauranteId, LocalDate data,
                                                LocalTime inicio, LocalTime fim) {
+        escopo.validarRestaurante(restauranteId);
         restauranteService.obter(restauranteId); // valida existencia (404)
 
         if (!fim.isAfter(inicio)) {

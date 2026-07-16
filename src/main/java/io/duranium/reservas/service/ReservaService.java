@@ -11,6 +11,7 @@ import io.duranium.reservas.model.Mesa;
 import io.duranium.reservas.model.Reserva;
 import io.duranium.reservas.model.StatusReserva;
 import io.duranium.reservas.repository.ReservaRepository;
+import io.duranium.reservas.security.Escopo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,19 +28,31 @@ public class ReservaService {
     private final ReservaRepository repository;
     private final ClienteService clienteService;
     private final MesaService mesaService;
+    private final Escopo escopo;
 
     public ReservaService(ReservaRepository repository,
                           ClienteService clienteService,
-                          MesaService mesaService) {
+                          MesaService mesaService,
+                          Escopo escopo) {
         this.repository = repository;
         this.clienteService = clienteService;
         this.mesaService = mesaService;
+        this.escopo = escopo;
     }
 
     @Transactional
     public ReservaResponse criar(ReservaRequest req) {
         Cliente cliente = clienteService.obter(req.clienteId());
         Mesa mesa = mesaService.obter(req.mesaId());
+
+        // Escopo: logins de restaurante so reservam nas proprias mesas.
+        escopo.validarRestaurante(mesa.getRestaurante().getId());
+
+        // Consistencia: o cliente deve pertencer ao mesmo restaurante da mesa.
+        if (cliente.getRestaurante() != null
+                && !cliente.getRestaurante().getId().equals(mesa.getRestaurante().getId())) {
+            throw new RegraNegocioException("O cliente pertence a outro restaurante.");
+        }
 
         // Regra: a mesa precisa estar ativa.
         if (!mesa.isAtivo()) {
@@ -86,18 +99,23 @@ public class ReservaService {
         return toResponse(repository.save(reserva));
     }
 
-    public List<ReservaResponse> listar(LocalDate data, StatusReserva status) {
-        return repository.buscarComFiltros(data, status).stream()
+    public List<ReservaResponse> listar(LocalDate data, StatusReserva status, Long restauranteIdFiltro) {
+        // RESTAURANTE: forcado ao proprio restaurante; ADMIN: filtro opcional.
+        Long restauranteId = escopo.restauranteIdEfetivo(restauranteIdFiltro);
+        return repository.buscarComFiltros(data, status, restauranteId).stream()
                 .map(this::toResponse).toList();
     }
 
     public ReservaResponse detalhar(Long id) {
-        return toResponse(obter(id));
+        Reserva reserva = obter(id);
+        escopo.validarRestaurante(reserva.getMesa().getRestaurante().getId());
+        return toResponse(reserva);
     }
 
     @Transactional
     public ReservaResponse atualizarStatus(Long id, StatusReserva novoStatus) {
         Reserva reserva = obter(id);
+        escopo.validarRestaurante(reserva.getMesa().getRestaurante().getId());
 
         // Regra 4 (lógica): reservas canceladas/finalizadas nao podem ser alteradas.
         if (reserva.getStatus() == StatusReserva.CANCELADA

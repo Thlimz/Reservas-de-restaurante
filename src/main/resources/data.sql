@@ -9,11 +9,14 @@ INSERT IGNORE INTO restaurantes (id, nome, endereco, telefone) VALUES
   (1, 'Cantina da Nona', 'Rua das Oliveiras, 123', '(11) 3333-1000'),
   (2, 'Sushi Duranium', 'Av. Paulista, 900', '(11) 3333-2000');
 
--- Clientes
-INSERT IGNORE INTO clientes (id, nome, telefone, email) VALUES
-  (1, 'Joao Silva', '(11) 99999-9999', 'joao.silva@email.com'),
-  (2, 'Maria Souza', '(11) 98888-8888', 'maria.souza@email.com'),
-  (3, 'Carlos Lima', '(11) 97777-7777', 'carlos.lima@email.com');
+-- Clientes (cada cliente pertence a um restaurante)
+INSERT IGNORE INTO clientes (id, nome, telefone, email, restaurante_id) VALUES
+  (1, 'Joao Silva', '(11) 99999-9999', 'joao.silva@email.com', 1),
+  (2, 'Maria Souza', '(11) 98888-8888', 'maria.souza@email.com', 1),
+  (3, 'Carlos Lima', '(11) 97777-7777', 'carlos.lima@email.com', 2);
+
+-- Migra clientes antigos (criados antes do vinculo com restaurante)
+UPDATE clientes SET restaurante_id = 1 WHERE restaurante_id IS NULL;
 
 -- Mesas do restaurante 1 (Cantina da Nona)
 INSERT IGNORE INTO mesas (id, restaurante_id, numero, capacidade, tipo, ativo) VALUES
